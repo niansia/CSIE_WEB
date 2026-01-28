@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Bitonic Euclidean TSP{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+        overflow: hidden;
+        height: 450px;
+        position: relative;
+    }
+    .formula-box {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+    }
+</style>
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Bitonic Euclidean Traveling-Salesman Problem</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">問題描述 (Problem Description)</div>
+            <div class="card-body">
+                <div class="alert alert-light border mb-3" style="font-size: 0.9rem; color: #555;">
+                    <strong>15-3 Bitonic euclidean traveling-salesman problem</strong><br>
+                    In the euclidean traveling-salesman problem, we are given a set of $n$ points in the plane, and we wish to find the shortest closed tour that connects all $n$ points.
+                    A <strong>bitonic tour</strong> starts at the leftmost point, goes strictly rightward to the rightmost point, and then goes strictly leftward back to the starting point.
+                    Describe an $O(n^2)$-time algorithm for determining an optimal bitonic tour.
+                </div>
+                <div class="alert alert-info" style="font-size: 0.9rem;">
+                    <strong>為什麼要這樣定義狀態與轉移？(幾何直觀)</strong><br>
+                    我們依序將點 $p_1, p_2, \dots, p_n$ 加入路徑中。狀態 $B[i, j]$ 代表兩條路徑的終點分別停在 $p_i$ 和 $p_j$ (且 $i < j$)。<br>
+                    當我們要把最新的點 $p_j$ 加入時，它必須接在某個點後面。
+                    <br><br>
+                    <strong>情況 1：$i < j-1$ (簡單延伸)</strong><br>
+                    這代表另一條路徑停在很前面的 $p_i$。那麼 $p_j$ 只能接在 $p_{j-1}$ 後面。<br>
+                    <em>為什麼？</em> 因為如果 $p_j$ 不接 $p_{j-1}$，那 $p_{j-1}$ 就必須在另一條路徑上。但另一條路徑只走到 $p_i$ (且 $i < j-1$)，這表示 $p_{j-1}$ 根本還沒被連到！這違反了我們「依序加點」的規則。所以 $p_j$ 必須直接連著 $p_{j-1}$。
+                    <br><br>
+                    <strong>情況 2：$i = j-1$ (分岔點選擇)</strong><br>
+                    這代表兩條路徑分別停在 $p_{j-1}$ 和 $p_j$。這通常發生在「剛把路徑分岔」的時候。<br>
+                    在加入 $p_j$ 之前，兩條路徑的終點分別是 $p_{j-1}$ 和某個 $p_k$ ($k < j-1$)。現在我們決定把 $p_j$ 接在 $p_k$ 後面。<br>
+                    因為我們不知道接在哪個 $p_k$ 會最好，所以必須<strong>嘗試所有可能的 $k$</strong> ($1 \le k < j-1$)，找出使總長度最小的那個接法。
+                </div>
+                <p><strong>解法思路 (Solution):</strong></p>
+                <ul>
+                    <li>將點依 x 座標排序：$p_1, \dots, p_n$。</li>
+                    <li>定義 $B[i, j]$ 為兩條從 $p_1$ 出發的路徑，分別結束於 $p_i$ 與 $p_j$ (其中 $i < j$)，且涵蓋 $\{p_1, \dots, p_j\}$ 的最短總長度。</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">遞迴關係式 (Recurrence)</div>
+            <div class="card-body">
+                <div class="formula-box">
+                    $$ B[i, j] = \begin{cases} B[i, j-1] + d(j-1, j) & \text{if } i < j-1 \\ \min_{1 \le k < j-1} \{ B[k, j-1] + d(k, j) \} & \text{if } i = j-1 \end{cases} $$
+                </div>
+                <p class="small text-muted">
+                    基底：$B[1, 2] = d(1, 2)$。<br>
+                    最終答案：$B[n-1, n] + d(n-1, n)$。
+                </p>
+                <hr>
+                <h6>虛擬碼 (Pseudocode)</h6>
+                <pre style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 0.85rem;">
+Sort points by x-coordinate
+B[1, 2] = dist(1, 2)
+
+for j = 3 to n:
+    // Case 1: i < j-1
+    for i = 1 to j-2:
+        B[i, j] = B[i, j-1] + dist(j-1, j)
+    
+    // Case 2: i = j-1
+    B[j-1, j] = infinity
+    for k = 1 to j-2:
+        val = B[k, j-1] + dist(k, j)
+        if val < B[j-1, j]:
+            B[j-1, j] = val
+            parent[j] = k  // Record for backtracking
+
+Return B[n-1, n] + dist(n-1, n)
+</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row mb-2">
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+                    <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+                    <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <span class="input-group-text">速度: <span id="speedDisplay" class="ms-1">1000 ms</span></span>
+                    <input type="range" class="form-range form-control" id="speedRange" min="100" max="3000" value="1000" style="width: 150px;">
+                </div>
+            </div>
+            <div class="col-auto align-self-center">
+                <button class="btn btn-info text-white me-2" data-bs-toggle="modal" data-bs-target="#explanationModal">完整說明</button>
+                <button class="btn btn-success" onclick="initProof()">重新開始</button>
+            </div>
+        </div>
+        
+        <div class="row mb-2">
+             <div class="col-12">
+                <div class="alert alert-info" id="statusText" style="min-height: 60px;">準備就緒</div>
+             </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div id="canvas-wrapper">
+                    <canvas id="tspCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/bitonic_tsp.js') }}"></script>
+
+<!-- Explanation Modal -->
+<div class="modal fade" id="explanationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bitonic TSP 演算法設計思路</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. 問題轉化</h6>
+                <p>
+                    Bitonic Tour 的定義是「從最左點出發，嚴格向右走到最右點，再嚴格向左回到起點」。
+                    這可以等價地看作：<strong>找出兩條從起點 $p_1$ 出發，分別到達 $p_n$ 的路徑</strong>，這兩條路徑除了起點和終點外不相交，且這兩條路徑合起來剛好經過所有點一次。
+                </p>
+                
+                <h6>2. 狀態定義 $B[i, j]$</h6>
+                <p>
+                    為了使用動態規劃，我們定義狀態 $B[i, j]$ (其中 $i < j$) 為：
+                    <br>
+                    <strong>兩條從 $p_1$ 出發的路徑，一條停在 $p_i$，另一條停在 $p_j$，且這兩條路徑合起來剛好覆蓋了集合 $\{p_1, p_2, \dots, p_j\}$ 中的所有點。</strong>
+                    <br>
+                    注意：因為 $j$ 是目前最大的索引，所以 $p_j$ 一定是其中一條路徑的終點。
+                </p>
+
+                <h6>3. 狀態轉移推導</h6>
+                <p>當我們考慮下一個點 $p_j$ 時，它一定連接著某個之前的點。因為路徑是單調向右的，這個之前的點一定是 $p_1 \dots p_{j-1}$ 中的某一個。</p>
+                <ul>
+                    <li>
+                        <strong>情況一：$i < j-1$</strong><br>
+                        這表示兩條路徑的終點分別是 $p_i$ 和 $p_j$。因為 $i < j-1$，所以 $p_{j-1}$ 一定不在以 $p_i$ 為終點的那條路徑上（否則 $p_i$ 就不是終點了，或者 $p_{j-1}$ 被跳過了）。
+                        <br>
+                        因此，$p_{j-1}$ 必須在以 $p_j$ 為終點的這條路徑上，而且緊鄰著 $p_j$。
+                        <br>
+                        轉移方程：$B[i, j] = B[i, j-1] + d(j-1, j)$
+                    </li>
+                    <li>
+                        <strong>情況二：$i = j-1$</strong><br>
+                        這表示兩條路徑的終點分別是 $p_{j-1}$ 和 $p_j$。
+                        這意味著在加入 $p_j$ 之前，兩條路徑的終點分別是 $p_k$ 和 $p_{j-1}$ (其中 $k < j-1$)。
+                        <br>
+                        $p_j$ 是接在 $p_k$ 後面的。我們需要遍歷所有可能的 $k$，找出使總長度最小的那個。
+                        <br>
+                        轉移方程：$B[j-1, j] = \min_{1 \le k < j-1} \{ B[k, j-1] + d(k, j) \}$
+                    </li>
+                </ul>
+
+                <h6>4. 複雜度分析</h6>
+                <p>
+                    狀態總數為 $O(n^2)$ (因為 $1 \le i < j \le n$)。
+                    <br>
+                    計算每個狀態的時間：
+                    <ul>
+                        <li>情況一只需 $O(1)$。</li>
+                        <li>情況二需要遍歷 $k$，需 $O(j) = O(n)$。</li>
+                    </ul>
+                    總時間複雜度：$\sum_{j=2}^n (O(j) + O(j)) = O(n^2)$。
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

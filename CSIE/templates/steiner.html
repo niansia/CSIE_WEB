@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Steiner Tree Approximation{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+        overflow: auto;
+    }
+    .step-text {
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+    .toolbar {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+</style>
+<!-- MathJax for formula -->
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Graph Steiner Minimal Tree (2-Approximation by MST)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="toolbar">
+            <div class="btn-group me-2">
+                <input type="radio" class="btn-check" name="mode" id="modeMove" value="move" checked>
+                <label class="btn btn-outline-secondary" for="modeMove">移動 (Move)</label>
+
+                <input type="radio" class="btn-check" name="mode" id="modeNode" value="node">
+                <label class="btn btn-outline-secondary" for="modeNode">新增節點 (Node)</label>
+
+                <input type="radio" class="btn-check" name="mode" id="modeEdge" value="edge">
+                <label class="btn btn-outline-secondary" for="modeEdge">新增邊 (Edge)</label>
+                
+                <input type="radio" class="btn-check" name="mode" id="modeTerminal" value="terminal">
+                <label class="btn btn-outline-danger" for="modeTerminal">切換終端 (Terminal)</label>
+                
+                <input type="radio" class="btn-check" name="mode" id="modeDelete" value="delete">
+                <label class="btn btn-outline-danger" for="modeDelete">刪除 (Delete)</label>
+            </div>
+            
+            <button class="btn btn-primary ms-3" onclick="runSteiner()">執行 (Run)</button>
+            <button class="btn btn-secondary ms-2" onclick="clearGraph()">清除 (Clear)</button>
+            <button class="btn btn-info ms-2 text-white" onclick="loadExample()">載入範例 (Example)</button>
+            <button class="btn btn-warning ms-2 text-dark" data-bs-toggle="modal" data-bs-target="#helpModal">說明 (Help)</button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+            <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+            <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+        </div>
+        <span class="ms-3" id="statusText">準備就緒</span>
+        
+        <div class="d-inline-block ms-4" style="width: 250px; vertical-align: middle;">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">速度: <span id="speedDisplay" class="ms-1">2100 ms</span></span>
+                <input type="range" class="form-range form-control" id="speedRange" min="100" max="5000" value="3000">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-9 mb-3 mb-lg-0">
+        <div id="canvas-wrapper">
+            <canvas id="graphCanvas" width="800" height="600"></canvas>
+        </div>
+    </div>
+    <div class="col-12 col-lg-3">
+        <div class="step-text" id="stepExplanation">
+            <h5 class="border-bottom pb-2">步驟解說</h5>
+            <div id="msgContent" style="white-space: pre-wrap;">請建立圖形並設定終端節點，然後點擊執行。</div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">Graph Steiner Minimal Tree 演算法說明</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. 問題定義 (Problem Definition)</h6>
+                <p>
+                    <strong>Graph Steiner Minimal Tree (SMT)</strong><br>
+                    給定一個無向圖 $G = (V, E, w)$ 和一個終端節點集合 $L \subseteq V$ (Terminals)。<br>
+                    目標是找到一棵樹 $T \subseteq G$，使得 $L \subseteq V(T)$ (包含所有終端節點)，且總權重 $w(T)$ 最小。
+                </p>
+                <p class="text-muted small">
+                    註：這是一個 NP-Complete 問題。本演示使用的是一個 2-Approximation 演算法 (MST-Steiner)。
+                </p>
+
+                <hr>
+
+                <h6>2. 演算法流程 (MST-Steiner Algorithm)</h6>
+                <ol>
+                    <li>
+                        <strong>建構 Metric Closure ($G_L$)：</strong><br>
+                        建立一個完全圖 $G_L$，其頂點集為 $L$ (所有終端節點)。<br>
+                        對於任意兩個終端節點 $u, v \in L$，邊 $(u, v)$ 的權重等於它們在原圖 $G$ 中的<strong>最短路徑長度</strong>。
+                    </li>
+                    <li>
+                        <strong>尋找最小生成樹 (MST on $G_L$)：</strong><br>
+                        在 $G_L$ 上找出最小生成樹 $T_L$。
+                    </li>
+                    <li>
+                        <strong>轉換回 Steiner Tree ($T$)：</strong><br>
+                        將 $T_L$ 中的每一條邊替換回原圖 $G$ 中的最短路徑，並消除迴圈。<br>
+                        具體規則如下：
+                        <ul>
+                            <li>對 $T_L$ 中的每一條邊 $e = (u, v)$，找出其在 $G$ 對應的最短路徑 $P$。</li>
+                            <li>如果路徑 $P$ 上少於 2 個頂點已存在於目前的樹 $T$ 中：<br>
+                                &nbsp;&nbsp;→ 將整條路徑 $P$ 加入 $T$。</li>
+                            <li>否則 (若路徑中間穿過已在樹中的點)：<br>
+                                &nbsp;&nbsp;→ 令 $p_i, p_j$ 為路徑上「第一個」與「最後一個」已在 $T$ 中的頂點。<br>
+                                &nbsp;&nbsp;→ 只加入 $u \to p_i$ 和 $p_j \to v$ 的路徑段。</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <hr>
+
+                <h6>3. 效能分析</h6>
+                <ul>
+                    <li><strong>近似比 (Approximation Ratio)：</strong> 2<br>
+                        此演算法保證找到的解不會超過最佳解的 2 倍 ($w(T) \le 2 \cdot w(OPT)$)。</li>
+                    <li><strong>時間複雜度：</strong> $O(V \cdot |L|^2)$<br>
+                        主要消耗在建構 Metric Closure (執行 $|L|$ 次 Dijkstra)。</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weight Input Modal -->
+<div class="modal fade" id="weightModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">設定權重</h5>
+            </div>
+            <div class="modal-body">
+                <input type="number" id="edgeWeightInput" class="form-control" min="1" value="1">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="confirmWeight()">確定</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/steiner.js') }}"></script>
+{% endblock %}

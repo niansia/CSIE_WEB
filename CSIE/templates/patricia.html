@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Patricia Tree{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+    }
+    #canvas-container {
+        width: 100%;
+        overflow: auto;
+    }
+    canvas {
+        display: block;
+        min-width: 100%;
+    }
+    .step-text {
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Patricia Tree (Horowitz Implementation)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text">輸入 Key (0/1)</span>
+            <input type="text" class="form-control" id="keyInput" placeholder="例如: 1000">
+            <button class="btn btn-primary" onclick="insertKey()">插入</button>
+            <button class="btn btn-danger" onclick="deleteKey()">刪除</button>
+            <button class="btn btn-secondary" onclick="clearTree()">清除</button>
+            <button class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#helpModal">說明</button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text">速度 (Speed): <span id="speedDisplay" class="ms-1">2100 ms</span></span>
+            <input type="range" class="form-range form-control" id="speedRange" min="100" max="5000" value="3000">
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+            <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+            <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+        </div>
+        <span class="ms-3" id="statusText">準備就緒</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-9 mb-3 mb-lg-0">
+        <div id="canvas-wrapper">
+            <div id="canvas-container">
+                <canvas id="treeCanvas" width="2000" height="1500"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-3">
+        <div class="step-text" id="stepExplanation">
+            <h5 class="border-bottom pb-2">步驟解說</h5>
+            <div id="msgContent" style="white-space: pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">Patricia Trie (Horowitz 版本) 操作說明</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. 輸入格式：</h6>
+                <p>請輸入由 0 與 1 組成的二進位字串 (例如: 1000, 0010)。</p>
+                
+                <h6>2. 節點結構：</h6>
+                <p>每個節點包含 Key (鍵值) 與 Bit (檢查位元索引)。<br>
+                Head 節點 (Bit=0) 為起始點，通常包含第一個插入的鍵值。</p>
+                
+                <h6>3. 搜尋邏輯：</h6>
+                <ul>
+                    <li>從當前節點的 Bit 屬性得知要檢查 Key 的第幾位。</li>
+                    <li>若該位元為 0 → 往左走；若為 1 → 往右走。</li>
+                    <li>終止條件：當下一個節點的 Bit Index 小於或等於當前節點時，停止搜尋。</li>
+                </ul>
+                
+                <h6>4. 插入邏輯：</h6>
+                <ol>
+                    <li>先搜尋到底，找到最接近的現有 Key (稱為 t)。</li>
+                    <li>比較 輸入Key 與 t，找出第一個不同的位元位置 d。</li>
+                    <li>建立新節點，設定其 Bit = d。</li>
+                    <li>重新搜尋，找到適當的父節點 p，使得 p.bit < d <= x.bit。</li>
+                    <li>將新節點插入 p 與 x 之間。</li>
+                </ol>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/patricia.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}

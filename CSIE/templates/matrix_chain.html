@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Matrix Chain Multiplication{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+        overflow: auto;
+        max-height: 800px;
+    }
+    .step-text {
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+    .formula-box {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+    }
+    #matrix-list-container {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+<!-- MathJax for formula -->
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Matrix Chain Multiplication (矩陣鏈乘積)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">設定與輸入</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">新增矩陣 (Add Matrix)</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Rows</span>
+                        <input type="number" class="form-control" id="rowsInput" placeholder="r" min="1">
+                        <span class="input-group-text">Cols</span>
+                        <input type="number" class="form-control" id="colsInput" placeholder="c" min="1">
+                        <button class="btn btn-success" onclick="addMatrix()">加入</button>
+                    </div>
+                    <small class="text-muted" id="dimHint">請輸入第一個矩陣的維度。</small>
+                </div>
+                
+                <div id="matrix-list-container">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>矩陣</th>
+                                <th>維度 (Rows x Cols)</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrixTableBody">
+                            <!-- Items will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3 d-grid gap-2">
+                    <button class="btn btn-primary" onclick="runMatrixChain()">執行 (Execute)</button>
+                    <button class="btn btn-secondary" onclick="resetDefault()">重置 (Reset)</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">遞迴關係式 (Recursive Formula)</div>
+            <div class="card-body">
+                <div class="formula-box">
+                    $$ s[i, j] = \begin{cases} 0 & \text{if } i = j \\ \min_{i \le k < j} \{ s[i, k] + s[k+1, j] + p_{i-1}p_k p_j \} & \text{if } i < j \end{cases} $$
+                </div>
+                <small class="text-muted">
+                    其中 $s[i, j]$ 為計算 $A_i \dots A_j$ 的最小純量乘法次數。
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row mb-2">
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+                    <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+                    <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <span class="input-group-text">速度: <span id="speedDisplay" class="ms-1">1500 ms</span></span>
+                    <input type="range" class="form-range form-control" id="speedRange" min="100" max="3000" value="1500" style="width: 150px;">
+                </div>
+            </div>
+            <div class="col-auto align-self-center">
+                <span id="statusText">準備就緒</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div class="alert alert-secondary text-center" style="font-family: 'Courier New', monospace; font-weight: bold; font-size: 1.2em;">
+                    最佳括號方式: <span id="parensDisplay" class="text-primary">尚未計算</span>
+                </div>
+                <div id="canvas-wrapper">
+                    <canvas id="mcmCanvas" height="600"></canvas>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <i class="bi bi-info-circle"></i> <strong>圖示說明：</strong> 左側表格 <b>s[i][j]</b> 顯示最小運算量，右側表格 <b>c[i][j]</b> 顯示最佳切割點 k。
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="alert alert-info" id="msgContent" role="alert" style="white-space: pre-wrap; min-height: 100px;">
+                    請輸入矩陣並點擊執行。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/matrix_chain.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}87年清大資工基礎計算機科學 - Spanning Tree Proof{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">87年清大資工基礎計算機科學 - Spanning Tree Proof</h1>
+    
+    <div class="alert alert-info">
+        <h4>Problem Description</h4>
+        <p>
+            Let $T_1$ and $T_2$ be two spanning trees of a connected graph $G$. Let $a$ be an edge that is in $T_1$ but not in $T_2$. Prove that there is an edge $b$ in $T_2$ but not in $T_1$ such that $(T_1 - \{a\}) \cup \{b\}$ and $(T_2 - \{b\}) \cup \{a\}$ are spanning trees of $G$.
+        </p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    證明過程
+                </div>
+                <div class="card-body">
+                    <h5>第一步：找出邊 $b$</h5>
+                    <ul>
+                        <li>$T_2$ 是 Tree，加入 $a=(x,y)$ 會形成唯一的 Cycle $C$。</li>
+                        <li>若 $C \setminus \{a\}$ 都在 $T_1$ 中，則 $T_1$ 會有 Cycle (矛盾)。</li>
+                        <li>故 $C \setminus \{a\}$ 中必有一邊 $b \notin T_1$。此即我們尋找的邊 $b \in T_2 \setminus T_1$。</li>
+                    </ul>
+                    <hr>
+                    
+                    <h5>第二步：證明 $T_2' = (T_2 \setminus \{b\}) \cup \{a\}$ 是 Spanning Tree</h5>
+                    <ul>
+                        <li><strong>邊數：</strong> $|V|-1 - 1 + 1 = |V|-1$。</li>
+                        <li><strong>無環：</strong> 移除 $b$ 打斷了 Cycle $C$。</li>
+                        <li><strong>連通：</strong> $b$ 在 Cycle 上，移除後仍可繞道 $a$ 連通。</li>
+                    </ul>
+                    <hr>
+                    
+                    <h5>第三步：證明 $T_1' = (T_1 \setminus \{a\}) \cup \{b\}$ 是 Spanning Tree</h5>
+                    <ul>
+                        <li><strong>邊數：</strong> $|V|-1$。</li>
+                        <li><strong>連通：</strong> 移除 $a$ 將 $T_1$ 分為兩塊 $A, B$。Cycle $C$ 跨越 $A, B$，且 $b$ 在 $C$ 上，故 $b$ 連接 $A, B$。</li>
+                        <li><strong>無環：</strong> 若有 Cycle 必含 $b$，但 $b$ 連接不同 Component，故不可能形成 Cycle。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    視覺化演示
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <button id="startBtn" class="btn btn-primary">開始演示</button>
+                                <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                                <button id="nextBtn" class="btn btn-secondary" disabled>下一步</button>
+                                <button id="resetBtn" class="btn btn-danger">重置</button>
+                            </div>
+                            <div class="col-auto ms-3">
+                                <label for="speedRange" class="form-label mb-0">播放速度:</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="range" class="form-range" id="speedRange" min="1" max="10" value="5" style="width: 150px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="proofCanvas" width="600" height="400" style="border:1px solid #ccc;"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-secondary" id="step-explanation" style="min-height: 300px;">
+                                點擊「開始演示」以執行證明過程。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/spanning_tree_proof.js') }}"></script>
+{% endblock %}

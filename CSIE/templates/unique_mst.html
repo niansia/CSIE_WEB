@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}23.1-6 Unique MST Proof{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">23.1-6 Unique Minimum Spanning Tree</h1>
+    
+    <div class="alert alert-info">
+        <h4>Problem Description</h4>
+        <p>
+            Show that a graph has a unique minimum spanning tree if, for every cut of the graph, there is a unique light edge crossing the cut. Show that the converse is not true by giving a counterexample.
+        </p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    證明與反例
+                </div>
+                <div class="card-body">
+                    <h5>(a) 若每個割都有唯一輕邊 $\Rightarrow$ MST 唯一</h5>
+                    <p>假設相反：存在兩棵不同的最小生成樹 $T_1$ 與 $T_2$。</p>
+                    <ol>
+                        <li>因為 $T_1 \neq T_2$，挑一條 $e = (u, v) \in T_1 \setminus T_2$。</li>
+                        <li>由性質 (23.1-3)：任何 MST 中的每一條邊，都是某個割的輕邊。因此，存在某個割 $(S, V-S)$，使得 $e$ 是跨越此割的輕邊。</li>
+                        <li>因為 $T_2$ 也是生成樹，它也必須有至少一條邊跨越這個割 (否則它不會連通整張圖)。令這條邊為 $f$，所以 $f \in T_2, f \text{ 跨越 } (S, V-S)$。</li>
+                        <li>由假設，「每個割只有一條輕邊」，而我們已知 $e$ 是此割的輕邊，所以 $w(f) \ge w(e)$。且如果 $f \neq e$，就有 $w(f) > w(e)$。</li>
+                        <li>若 $f \neq e$，則用 $e$ 替換掉 $f$ 可以把 $T_2$ 改成另一棵生成樹 $T_2' = T_2 - \{f\} \cup \{e\}$，而其權重 $w(T_2') = w(T_2) - w(f) + w(e) < w(T_2)$，與 $T_2$ 為 MST 矛盾。</li>
+                        <li>因此必有 $f = e$，也就是這個割上所有 MST 都必須選同一條邊 $e$。</li>
+                    </ol>
+                    <p>對「不同的邊」重複一樣的論證，可知 $T_1$ 與 $T_2$ 在每一條邊上都相同，只能是同一棵樹，與 $T_1 \neq T_2$ 矛盾。所以 $G$ 的 MST 必定唯一。</p>
+                    <hr>
+                    
+                    <h5>(b) 反向敘述不成立的反例</h5>
+                    <p>要找：MST 唯一，但存在某個割有兩條或以上輕邊。</p>
+                    <p>考慮只有三個頂點的三角形圖：</p>
+                    <ul>
+                        <li>頂點：$a, b, c$</li>
+                        <li>邊與權重：$(a, b): 1, (b, c): 1, (a, c): 2$</li>
+                    </ul>
+                    <p><strong>MST?</strong> 任何連通所有頂點的子圖必須選兩條邊：</p>
+                    <ul>
+                        <li>選 $(a, b)$ 和 $(b, c)$：總權重 $1+1=2$</li>
+                        <li>選 $(a, b)$ 和 $(a, c)$：總權重 $1+2=3$</li>
+                        <li>選 $(b, c)$ 和 $(a, c)$：總權重 $1+2=3$</li>
+                    </ul>
+                    <p>所以唯一的最小生成樹是 $T = \{(a, b), (b, c)\}$。</p>
+                    <p>但看 cut $(\{b\}, \{a, c\})$：跨越這個 cut 的邊是 $(a, b): 1$ 和 $(b, c): 1$。</p>
+                    <p>兩條邊權重相同，都是這個 cut 的輕邊，因此「輕邊不唯一」。$\Rightarrow$ 反向敘述不成立。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    視覺化演示 (反例)
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <button id="startBtn" class="btn btn-primary">開始演示</button>
+                                <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                                <button id="nextBtn" class="btn btn-secondary" disabled>下一步</button>
+                                <button id="resetBtn" class="btn btn-danger">重置</button>
+                            </div>
+                            <div class="col-auto ms-3">
+                                <label for="speedRange" class="form-label mb-0">播放速度:</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="range" class="form-range" id="speedRange" min="1" max="10" value="5" style="width: 150px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="algoCanvas" width="600" height="400" style="border:1px solid #ccc;"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-secondary" id="step-explanation" style="min-height: 300px;">
+                                點擊「開始演示」以執行過程。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/unique_mst.js') }}"></script>
+{% endblock %}

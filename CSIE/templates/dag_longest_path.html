@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}DAG Longest Path{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+        overflow: hidden;
+        height: 450px;
+        position: relative;
+    }
+    .formula-box {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+    }
+    .l-table th, .l-table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Longest Simple Path in a DAG (DAG 最長路徑)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">問題描述 (Problem Description)</div>
+            <div class="card-body">
+                <div class="alert alert-light border mb-3" style="font-size: 0.9rem; color: #555;">
+                    <strong>15-1 Longest simple path in a directed acyclic graph</strong><br>
+                    Suppose that we are given a directed acyclic graph $G = (V, E)$ with real-valued edge weights and two distinguished vertices $s$ and $t$. Describe a dynamic-programming approach for finding a longest weighted simple path from $s$ to $t$. What does the subproblem graph look like? What is the efficiency of your algorithm?
+                </div>
+                <p>給定一個有向無環圖 (DAG) $G=(V, E)$ 以及邊權重，找出從起點 $s$ 到終點 $t$ 的最長簡單路徑。</p>
+                <p><strong>解法 (Solution):</strong></p>
+                <ul>
+                    <li>因為是 DAG，沒有環，最長路徑問題有最佳子結構性質。</li>
+                    <li>定義 $L(v)$ 為從 $v$ 到 $t$ 的最長路徑長度。</li>
+                    <li>使用拓樸排序的反向順序計算 $L(v)$。</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">遞迴關係式 (Recurrence)</div>
+            <div class="card-body">
+                <div class="formula-box">
+                    $$ L(v) = \begin{cases} 0 & \text{if } v=t \\ \max_{(v,u) \in E} \{ w(v,u) + L(u) \} & \text{if } v \ne t \\ -\infty & \text{otherwise} \end{cases} $$
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">L 值表 (L-Values)</div>
+            <div class="card-body">
+                <table class="table table-bordered table-sm l-table">
+                    <thead>
+                        <tr>
+                            <th>Node</th>
+                            <th>L(v)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lTableBody">
+                        <!-- Rows will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row mb-2">
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+                    <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+                    <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <span class="input-group-text">速度: <span id="speedDisplay" class="ms-1">1000 ms</span></span>
+                    <input type="range" class="form-range form-control" id="speedRange" min="100" max="3000" value="1000" style="width: 150px;">
+                </div>
+            </div>
+            <div class="col-auto align-self-center">
+                <button class="btn btn-success" onclick="initProof()">重新開始</button>
+            </div>
+        </div>
+        
+        <div class="row mb-2">
+             <div class="col-12">
+                <div class="alert alert-info" id="statusText" style="min-height: 60px;">準備就緒</div>
+             </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div id="canvas-wrapper">
+                    <canvas id="dagCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dag_longest_path.js') }}"></script>
+{% endblock %}

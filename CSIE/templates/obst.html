@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Optimal Binary Search Tree (OBST){% endblock %}
+
+{% block head %}
+<style>
+    .dp-table-wrapper {
+        overflow: auto;
+        max-height: 400px;
+        border: 1px solid #ddd;
+    }
+    .dp-table {
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+    .dp-table td, .dp-table th {
+        border: 1px solid #ccc;
+        padding: 5px;
+        text-align: center;
+        min-width: 40px;
+    }
+    .dp-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    .highlight-cell {
+        background-color: #ffeb3b !important;
+        transition: background-color 0.3s;
+    }
+    .check-cell {
+        background-color: #e0f7fa !important;
+    }
+    .final-cell {
+        background-color: #c8e6c9 !important;
+    }
+    .table-container {
+        margin-bottom: 20px;
+    }
+    .formula-box {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+        overflow-x: auto;
+    }
+</style>
+<!-- MathJax for formula -->
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Optimal Binary Search Tree (最佳二元搜尋樹)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">設定與輸入</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">輸入模式 (Input Mode)</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="inputMode" id="modeWithQ" value="withQ" checked onchange="toggleQMode()">
+                        <label class="form-check-label" for="modeWithQ">包含搜尋失敗機率 q (With q)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="inputMode" id="modeWithoutQ" value="withoutQ" onchange="toggleQMode()">
+                        <label class="form-check-label" for="modeWithoutQ">不含 q (僅成功搜尋)</label>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="q0InputGroup">
+                    <label class="form-label">初始搜尋失敗機率 q0 (Initial q0)</label>
+                    <input type="number" step="0.01" class="form-control" id="q0Input" placeholder="0.05" value="0.05">
+                </div>
+
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col">
+                        <label class="form-label">成功機率 p</label>
+                        <input type="number" step="0.01" class="form-control" id="newPInput" placeholder="0.15">
+                    </div>
+                    <div class="col" id="newQInputGroup">
+                        <label class="form-label">失敗機率 q</label>
+                        <input type="number" step="0.01" class="form-control" id="newQInput" placeholder="0.10">
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-success" onclick="addKey()">加入</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-3" style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-sm table-striped table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Key</th>
+                                <th>p</th>
+                                <th class="q-col">q</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keysTableBody">
+                            <!-- Rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="startOBST()">開始視覺化 (Start)</button>
+                    <button class="btn btn-danger" onclick="resetData()">重置資料 (Reset Data)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">遞迴關係式 (Recurrence)</div>
+            <div class="card-body">
+                <div class="formula-box">
+                    $$ w[i, j] = w[i, j-1] + p_j + q_j $$
+                    $$ e[i, j] = \begin{cases} q_{i-1} & \text{if } j = i-1 \\ \min_{i \le r \le j} \{ e[i, r-1] + e[r+1, j] + w[i, j] \} & \text{if } i \le j \end{cases} $$
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                控制與狀態
+                <div class="float-end">
+                    <button class="btn btn-sm btn-secondary" onclick="prevStep()">上一步</button>
+                    <button class="btn btn-sm btn-success" onclick="togglePlay()">播放/暫停</button>
+                    <button class="btn btn-sm btn-secondary" onclick="nextStep()">下一步</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="speedRange" class="form-label">速度: <span id="speedValue">500</span>ms</label>
+                    <input type="range" class="form-range" id="speedRange" min="100" max="2000" step="100" value="500" oninput="updateSpeedDisplay(this.value)">
+                </div>
+                <div class="alert alert-info" id="status" style="min-height: 60px;">準備就緒</div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">執行過程與結果 (Execution & Result)</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-xl-4 col-lg-6 mb-3">
+                        <h6 class="text-center">Table e (Cost)</h6>
+                        <div id="table-e" class="dp-table-wrapper"></div>
+                    </div>
+                    <div class="col-xl-4 col-lg-6 mb-3">
+                        <h6 class="text-center">Table w (Weight)</h6>
+                        <div id="table-w" class="dp-table-wrapper"></div>
+                    </div>
+                    <div class="col-xl-4 col-lg-6 mb-3">
+                        <h6 class="text-center">Table root</h6>
+                        <div id="table-root" class="dp-table-wrapper"></div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-center">最佳二元搜尋樹 (Optimal BST)</h6>
+                        <div id="tree-container" style="width: 100%; height: 450px; border: 1px solid #eee; position: relative; background-color: #fafafa;">
+                            <canvas id="treeCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/obst.js') }}"></script>
+{% endblock %}
+

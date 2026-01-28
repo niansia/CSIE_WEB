@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}15.3-6 Currency Exchange Proof{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-center mb-4">15.3-6 Currency Exchange with Commissions</h1>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">題目敘述 (15.3-6)</h5>
+                    <p class="card-text" style="text-align: justify;">
+                        Imagine that you wish to exchange one currency for another. You realize that instead of directly exchanging one currency for another, you might be better off making a series of trades through other currencies, winding up with the currency you want. Suppose that you can trade $n$ different currencies, numbered $1, 2, \dots, n$, where you start with currency 1 and wish to wind up with currency $n$. You are given, for each pair of currencies $i$ and $j$, an exchange rate $r_{ij}$, meaning that if you start with $d$ units of currency $i$, you can trade for $d r_{ij}$ units of currency $j$. A sequence of trades may entail a commission, which depends on the number of trades you make. Let $c_k$ be the commission that you are charged when you make $k$ trades. Show that, if $c_k = 0$ for all $k = 1, 2, \dots, n$, then the problem of finding the best sequence of exchanges from currency 1 to currency $n$ exhibits optimal substructure. Then show that if commissions $c_k$ are arbitrary values, then the problem of finding the best sequence of exchanges from currency 1 to currency $n$ does not necessarily exhibit optimal substructure.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="step-title">證明演示</h5>
+                        <div class="btn-group">
+                            <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                            <button id="playPauseBtn" class="btn btn-primary">播放</button>
+                            <button id="nextBtn" class="btn btn-secondary">下一步</button>
+                            <button id="resetBtn" class="btn btn-warning">重新開始</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div id="step-description" class="alert alert-info mb-3" style="min-height: 60px; font-size: 1.1em;">
+                        準備中...
+                    </div>
+                    <div id="math-display" class="mb-3" style="min-height: 40px; font-size: 1.2em; font-weight: bold;"></div>
+                    <div class="canvas-container" style="position: relative; width: 100%; height: 400px; border: 1px solid #ddd; background-color: #fafafa;">
+                        <canvas id="proofCanvas" width="800" height="400"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <label for="speedRange" class="form-label">演示速度: <span id="speedValue">3</span></label>
+                        <input type="range" class="form-range" id="speedRange" min="1" max="5" value="3">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    詳細證明邏輯
+                </div>
+                <div class="card-body">
+                    <h5>(1) 無手續費 ($c_k = 0$) 時有最佳子結構</h5>
+                    <p>
+                        若一條路徑 $P: 1 \to \dots \to n$ 經過節點 $i$，其最終得到的貨幣 $n$ 數量為 $d \cdot \prod_{(u \to v) \in P} r_{uv}$。<br>
+                        假設 $P^*$ 是最佳路徑，且 $P^* = P_1 (1 \to i) + P_2 (i \to n)$。<br>
+                        若 $P_1$ 不是從 1 到 $i$ 的最佳路徑，則存在 $P'_1$ 使得 $\prod P'_1 > \prod P_1$。<br>
+                        用 $P'_1$ 取代 $P_1$，新路徑收益為 $d \cdot (\prod P'_1) \cdot (\prod P_2) > d \cdot (\prod P_1) \cdot (\prod P_2) = \text{Value}(P^*)$。<br>
+                        這與 $P^*$ 是最佳解矛盾，故 $P_1$ 必須是最佳路徑。
+                    </p>
+                    <hr>
+                    <h5>(2) 手續費 $c_k$ 為任意值時，可能沒有最佳子結構</h5>
+                    <p>
+                        此時收益公式為 $d \cdot (\prod r_{ij}) - c_k$，其中 $k$ 是交易次數。<br>
+                        手續費取決於「整條路徑做了幾次交易」，而不是各個子路徑各自的次數。<br>
+                        <strong>反例：</strong><br>
+                        貨幣 1, 2, 3, 4。$c_1=0, c_2=0, c_3=200$。<br>
+                        路徑 $1 \to 2 \to 4$ (2次交易): $1 \cdot 2 \cdot 2 - c_2 = 4$。<br>
+                        路徑 $1 \to 3 \to 2 \to 4$ (3次交易): $1 \cdot 10 \cdot 10 \cdot 2 - c_3 = 0$。<br>
+                        整體最佳解是 $1 \to 2 \to 4$。<br>
+                        但其子路徑 $1 \to 2$ (收益 2) 並非 $1$ 到 $2$ 的最佳解 (最佳解是 $1 \to 3 \to 2$，收益 100)。<br>
+                        因此不具備最佳子結構。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+  window.MathJax = {
+    options: {
+      enableMenu: false
+    },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="{{ url_for('static', filename='js/currency_exchange.js') }}"></script>
+{% endblock %}

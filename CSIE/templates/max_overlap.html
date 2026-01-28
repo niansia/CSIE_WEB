@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-center mb-4">14-1 Point of Maximum Overlap 證明演示</h1>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">題目敘述</h5>
+                    <p class="card-text">
+                        Suppose that we wish to keep track of a point of maximum overlap in a set of intervals—a point with the largest number of intervals in the set that overlap it.<br>
+                        <strong>a. Show that there will always be a point of maximum overlap that is an endpoint of one of the segments.</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">證明過程演示</h5>
+                        <div class="btn-group">
+                            <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                            <button id="playPauseBtn" class="btn btn-primary">播放</button>
+                            <button id="nextBtn" class="btn btn-secondary">下一步</button>
+                            <button id="resetBtn" class="btn btn-warning">重新生成數據</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div id="step-description" class="alert alert-info mb-3" style="min-height: 60px; font-size: 1.1em;">
+                        準備中...
+                    </div>
+                    <div class="canvas-container" style="position: relative; width: 100%; height: 400px; border: 1px solid #ddd; background-color: #fafafa;">
+                        <canvas id="proofCanvas" width="800" height="400"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <label for="speedRange" class="form-label">演示速度: <span id="speedValue">3</span></label>
+                        <input type="range" class="form-range" id="speedRange" min="1" max="5" value="3">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    完整證明邏輯
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>把所有區間畫在數線上後，可以想像「同時覆蓋某一點的區間數量」是一個隨 $x$ 變化的函數 $f(x)$。</li>
+                        <li>函數 $f(x)$ 只會在端點處改變（某個區間「開始」或「結束」）。在任何兩個相鄰端點之間，覆蓋某點的區間集合完全一樣，所以 $f(x)$ 在那段區間是常數。</li>
+                        <li>令 $[e_1 < e_2 < \dots < e_k]$ 是所有端點排序後的結果。在每個開區間 $(e_j, e_{j+1})$ 上，$f(x)$ 是常數；在各端點 $e_j$ 也有定值。</li>
+                        <li>所以 $f$ 的最大值一定出現在：
+                            <ul>
+                                <li>某個端點 $e_j$，或</li>
+                                <li>某個「端點之間的區間」$(e_j, e_{j+1})$ 上。</li>
+                            </ul>
+                        </li>
+                        <li>若最大值出現在某個開區間 $(e_j, e_{j+1})$ 裡，那整段區間上 $f(x)$ 都一樣大。此時我們可以把點往左移到靠近的端點 $e_j$（或往右移到 $e_{j+1}$），覆蓋它的區間集合完全沒變，所以 $f(e_j)$ 也同樣是最大值。</li>
+                        <li>而每個 $e_j$ 本身就是某個區間的左或右端點。</li>
+                    </ol>
+                    <p class="mt-3"><strong>因此：一定存在一個最大重疊點，它是某個區間的端點。</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+  window.MathJax = {
+    options: {
+      enableMenu: false
+    },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="{{ url_for('static', filename='js/max_overlap.js') }}"></script>
+{% endblock %}

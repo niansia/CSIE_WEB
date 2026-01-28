@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}17-1 Bit-reversed Binary Counter{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">17-1 Bit-reversed Binary Counter</h1>
+    
+    <div class="alert alert-info">
+        <h4>Problem Description</h4>
+        <p>
+            Chapter 30 examines the Fast Fourier Transform (FFT). The first step performs a <strong>bit-reversal permutation</strong> on an input array $A[0 \dots n-1]$ where $n=2^k$.
+            This permutation swaps elements whose indices have binary representations that are the reverse of each other.
+        </p>
+        <p>
+            We define $\text{rev}_k(\langle a_{k-1}, \dots, a_0 \rangle) = \langle a_0, \dots, a_{k-1} \rangle$.
+        </p>
+        <p>
+            <strong>Goal:</strong> Perform the bit-reversal permutation on an array of length $n=2^k$ in $O(n)$ time.
+        </p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    解答與分析
+                </div>
+                <div class="card-body">
+                    <h5>(a) 直接用 $\text{rev}_k$: $O(nk)$</h5>
+                    <p>最簡單作法：</p>
+                    <pre><code>for a = 0 to n-1:
+    b = rev_k(a)
+    if b > a:
+        swap(A[a], A[b])</code></pre>
+        <ul>
+            <li>每個 $a$ 計算一次 $\text{rev}_k$，花 $\Theta(k)$。</li>
+            <li>總共有 $n$ 個索引 $\to$ 時間 $\Theta(nk)$。</li>
+        </ul>
+                    <hr>
+                    
+                    <h5>(b) 用「反向計數器」+ 攤銷分析: 總 $O(n)$</h5>
+                    <p>把 bit-reversed 值當成一個 k-bit word 來維護。</p>
+                    <p>演算法會<strong>從最高位開始</strong>，把連續的 1 清成 0，然後把第一個 0 設成 1。</p>
+                    <pre><code>BIT-REVERSED-INCREMENT(y):
+    i = k-1
+    while i >= 0 and bit_i(y) == 1:
+        clear bit_i(y)   // 設為 0
+        i = i - 1
+    if i >= 0:
+        set bit_i(y) = 1
+    return y</code></pre>
+                    <ul>
+                        <li><strong>攤銷分析：</strong>
+                            <ul>
+                                <li>從 0 變 1 的次數 $\le 1$ 次。</li>
+                                <li>從 1 變 0 的次數 $\le 1$ 次 (每升一階只會被清一次)。</li>
+                            </ul>
+                        </li>
+                        <li>總翻轉次數 $< 2n$。因此總成本是 $O(n)$。</li>
+                    </ul>
+                    <hr>
+                    
+                    <h5>(c) 一次只能移 1 個 bit 還行不行？</h5>
+                    <p>可以，還是可以做到 $O(n)$。</p>
+                    <p>我們只用到「讀某一個 bit、把某一個 bit 設成 0 或 1」。這些都可以用 mask $1 \ll i$ 和 bitwise-AND/OR/XOR 實作。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    視覺化演示 (Bit-reversed Increment)
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <button id="startBtn" class="btn btn-primary">開始演示</button>
+                                <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                                <button id="nextBtn" class="btn btn-secondary" disabled>下一步</button>
+                                <button id="resetBtn" class="btn btn-danger">重置</button>
+                            </div>
+                            <div class="col-auto ms-3">
+                                <label for="speedRange" class="form-label mb-0">播放速度:</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="range" class="form-range" id="speedRange" min="1" max="10" value="5" style="width: 150px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <canvas id="algoCanvas" width="800" height="400" style="border:1px solid #ccc; width: 100%;"></canvas>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-secondary" id="step-explanation" style="min-height: 100px;">
+                                點擊「開始演示」以執行過程。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/bit_reversed_counter.js') }}"></script>
+{% endblock %}

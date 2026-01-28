@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Longest Common Subsequence{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+        overflow: auto;
+        max-height: 600px;
+    }
+    .formula-box {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+    }
+</style>
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Longest Common Subsequence (LCS)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">設定與輸入</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">序列 X (Sequence X)</label>
+                    <input type="text" class="form-control" id="text1Input" placeholder="e.g. ABCBDAB">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">序列 Y (Sequence Y)</label>
+                    <input type="text" class="form-control" id="text2Input" placeholder="e.g. BDCABA">
+                </div>
+                
+                <div class="mt-3 d-grid gap-2">
+                    <button class="btn btn-primary" onclick="runLCS()">執行 (Execute)</button>
+                    <button class="btn btn-secondary" onclick="clearAll()">清除重置</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">遞迴關係式 (Recursive Formula)</div>
+            <div class="card-body">
+                <div class="formula-box">
+                    $$ c[i, j] = \begin{cases} 0 & \text{if } i=0 \text{ or } j=0 \\ c[i-1, j-1] + 1 & \text{if } i,j>0 \text{ and } x_i = y_j \\ \max(c[i, j-1], c[i-1, j]) & \text{if } i,j>0 \text{ and } x_i \ne y_j \end{cases} $$
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row mb-2">
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+                    <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+                    <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <span class="input-group-text">速度: <span id="speedDisplay" class="ms-1">2600 ms</span></span>
+                    <input type="range" class="form-range form-control" id="speedRange" min="100" max="5000" value="2500" style="width: 150px;">
+                </div>
+            </div>
+            <div class="col-auto align-self-center">
+                <span id="statusText">準備就緒</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div id="canvas-wrapper">
+                    <canvas id="lcsCanvas"></canvas>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <i class="bi bi-info-circle"></i> <strong>符號說明：</strong> ↖ (Match), ↑ (Up), ← (Left)。
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="alert alert-info" id="msgContent" role="alert" style="white-space: pre-wrap; min-height: 100px;">
+                    請輸入兩個序列並點擊執行。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lcs.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}15-11 Inventory Planning{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">15-11 Inventory Planning</h1>
+    
+    <div class="alert alert-info">
+        <h4>Problem Description</h4>
+        <p>
+            The Rinky Dink Company makes machines that resurface ice rinks. The demand for such products varies from month to month, and so the company needs to develop a strategy to plan its manufacturing given the fluctuating, but predictable, demand. The company wishes to design a plan for the next $n$ months. For each month $i$, the company knows the demand $d_i$, that is, the number of machines that it will sell. Let $D = \sum_{i=1}^n d_i$ be the total demand over the next $n$ months. The company keeps a full-time staff who provide labor to manufacture up to $m$ machines per month. If the company needs to make more than $m$ machines in a given month, it can hire additional, part-time labor, at a cost that works out to $c$ dollars per machine. Furthermore, if, at the end of a month, the company is holding any unsold machines, it must pay inventory costs. The cost for holding $j$ machines is given as a function $h(j)$ for $j = 1, 2, \dots, D$, where $h(j) \ge 0$ for $1 \le j \le D$ and $h(j) \le h(j+1)$ for $1 \le j \le D-1$.
+        </p>
+        <p>
+            Give an algorithm that calculates a plan for the company that minimizes its costs while fulfilling all the demand. The running time should be polyomial in $n$ and $D$.
+        </p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    解題想法
+                </div>
+                <div class="card-body">
+                    <p>這是標準的「生產+庫存」規劃問題，可用 DP，在每個「月份+庫存量」的狀態之間轉移。</p>
+                    <p><strong>關鍵觀察：</strong></p>
+                    <ul>
+                        <li>任一時間點，庫存不需要超過總需求 $D$ (多生產只會增加成本)。<br>
+                        $\to$ 庫存狀態 $j$ 只要考慮 $0 \le j \le D$。</li>
+                        <li>第 $i$ 個月開始若庫存是 $s$，該月生產 $x$ 台、需求 $d_i$，月底庫存變成<br>
+                        $j = s + x - d_i \quad (\ge 0)$<br>
+                        $\to$ 生產量 $x = d_i + j - s$。</li>
+                        <li>該月成本：
+                            <ul>
+                                <li>若 $x \le m$：沒有臨時工成本。</li>
+                                <li>若 $x > m$：臨時工成本 $= (x - m) \cdot c$。</li>
+                                <li>加上月底庫存成本 $h(j)$。</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>我們希望最後第 $n$ 個月底庫存為 0 (沒有理由多生產)。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    狀態與轉移
+                </div>
+                <div class="card-body">
+                    <p>令 $f[i][j] =$ 處理完第 $i$ 個月後，月底庫存 $j$ 台時的最小總成本</p>
+                    <ul>
+                        <li>範圍：$i = 0..n, j = 0..D$。</li>
+                        <li>初始：
+                            <ul>
+                                <li>$f[0][0] = 0$ (一開始沒有庫存、沒有成本)</li>
+                                <li>其他 $f[0][j] = +\infty$ (不可能)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>對於每個月 $i = 1..n$，每個可能月底庫存 $j (0..D)$：<br>
+                    要從前一個月庫存 $s (0..D)$ 轉到 $j$：</p>
+                    <ul>
+                        <li>生產量 $x = d_i + j - s$ 必須 $\ge 0$，否則不合法。</li>
+                        <li>該月成本<br>
+                        $cost(i, s \to j) = \max(0, x - m) \cdot c + h(j)$</li>
+                    </ul>
+                    <p>因此轉移式：<br>
+                    $f[i][j] = \min_{\substack{0 \le s \le D \\ x = d_i + j - s \ge 0}} \{ f[i-1][s] + \max(0, x - m) \cdot c + h(j) \}$</p>
+                    <p>最後答案是 $f[n][0]$ (第 $n$ 個月後庫存為 0)。</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    複雜度
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>狀態數：$(n+1) \times (D+1) = \Theta(nD)$。</li>
+                        <li>每個狀態枚舉前一個庫存 $s$，最多 $D+1$ 種。<br>
+                        $\to$ 時間 $O(nD^2)$ —— 題目只要求多項式時間，符合。</li>
+                        <li>空間 $O(nD)$ (若只存兩列可壓到 $O(D)$，但回溯就要再記錄 predecessor)。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    DP 視覺化演示
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <button id="startBtn" class="btn btn-primary">開始演示</button>
+                        <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                        <button id="nextBtn" class="btn btn-secondary" disabled>下一步</button>
+                        <button id="autoBtn" class="btn btn-success" disabled>自動播放</button>
+                        <button id="resetBtn" class="btn btn-danger">重置</button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm text-center" id="dpTable">
+                            <!-- Generated by JS -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    演算法說明與狀態
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-secondary" id="step-explanation" style="min-height: 100px; max-height: 400px; overflow-y: auto;">
+                        點擊「開始演示」以執行演算法。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/inventory_planning.js') }}"></script>
+{% endblock %}

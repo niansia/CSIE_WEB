@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Red-Black Tree{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+    }
+    #canvas-container {
+        width: 100%;
+        overflow: auto;
+    }
+    canvas {
+        display: block;
+        min-width: 100%;
+    }
+    .step-text {
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Red-Black Tree (CLRS Implementation)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text">輸入數值</span>
+            <input type="number" class="form-control" id="keyInput" placeholder="例如: 10, 20, 30">
+            <button class="btn btn-primary" onclick="insertKey()">插入</button>
+            <button class="btn btn-danger" onclick="deleteKey()">刪除</button>
+            <button class="btn btn-secondary" onclick="clearTree()">清除</button>
+            <button class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#helpModal">說明</button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text">速度 (Speed): <span id="speedDisplay" class="ms-1">2100 ms</span></span>
+            <input type="range" class="form-range form-control" id="speedRange" min="100" max="5000" value="3000">
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+            <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+            <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+        </div>
+        <span class="ms-3" id="statusText">準備就緒</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-9 mb-3 mb-lg-0">
+        <div id="canvas-wrapper">
+            <div id="canvas-container">
+                <canvas id="treeCanvas" width="2000" height="1500"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-3">
+        <div class="step-text" id="stepExplanation">
+            <h5 class="border-bottom pb-2">步驟解說</h5>
+            <div id="msgContent" style="white-space: pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">Red-Black Tree 操作說明</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. 紅黑樹性質：</h6>
+                <ul>
+                    <li>每個節點是紅色或黑色。</li>
+                    <li>根節點是黑色。</li>
+                    <li>每個葉節點 (NIL) 是黑色。</li>
+                    <li>如果一個節點是紅色，則它的兩個子節點都是黑色 (不能有連續的紅色節點)。</li>
+                    <li>對每個節點，從該節點到其所有後代葉節點的簡單路徑上，均包含相同數目的黑色節點 (黑高 Black-Height)。</li>
+                </ul>
+                
+                <hr>
+
+                <h6>2. 插入修正 (Insert Fixup) - 當父節點為紅色時：</h6>
+                <p>目標：修正連續紅色節點的問題。</p>
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>情況 (Case)</th>
+                            <th>描述</th>
+                            <th>動作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Case 1</strong></td>
+                            <td>叔叔節點 (Uncle) 是<strong>紅色</strong></td>
+                            <td>
+                                1. 父節點與叔叔設為<strong>黑色</strong><br>
+                                2. 祖父設為<strong>紅色</strong><br>
+                                3. 關注點上移至祖父
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Case 2</strong></td>
+                            <td>叔叔是<strong>黑色</strong>，且為<strong>三角形</strong>關係 (LR 或 RL)</td>
+                            <td>
+                                對父節點進行旋轉 (左旋或右旋)，轉為 Case 3 (直線型)。
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Case 3</strong></td>
+                            <td>叔叔是<strong>黑色</strong>，且為<strong>直線</strong>關係 (LL 或 RR)</td>
+                            <td>
+                                1. 父節點設為<strong>黑色</strong><br>
+                                2. 祖父設為<strong>紅色</strong><br>
+                                3. 對祖父進行旋轉
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <hr>
+
+                <h6>3. 刪除修正 (Delete Fixup) - 當刪除黑色節點時：</h6>
+                <p>目標：修正黑高不平衡 (雙重黑色 Double Black) 的問題。設 x 為雙重黑色節點，w 為其兄弟。</p>
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>情況 (Case)</th>
+                            <th>描述</th>
+                            <th>動作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Case 1</strong></td>
+                            <td>兄弟 w 是<strong>紅色</strong></td>
+                            <td>
+                                1. 兄弟設黑，父設紅<br>
+                                2. 對父節點旋轉<br>
+                                3. 更新兄弟 w (轉為 Case 2, 3, 4)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Case 2</strong></td>
+                            <td>兄弟 w 是<strong>黑色</strong>，且 w 的兩個子節點都是<strong>黑色</strong></td>
+                            <td>
+                                1. 兄弟 w 設為<strong>紅色</strong><br>
+                                2. x 上移至父節點 (父節點承接雙重黑色)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Case 3</strong></td>
+                            <td>兄弟 w 是<strong>黑色</strong>，近親姪子是<strong>紅色</strong>，遠親是黑色</td>
+                            <td>
+                                1. 近親姪子設黑，兄弟設紅<br>
+                                2. 對兄弟旋轉<br>
+                                3. 更新兄弟 w (轉為 Case 4)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Case 4</strong></td>
+                            <td>兄弟 w 是<strong>黑色</strong>，遠親姪子是<strong>紅色</strong></td>
+                            <td>
+                                1. 兄弟設為父節點顏色<br>
+                                2. 父節點設黑，遠親姪子設黑<br>
+                                3. 對父節點旋轉<br>
+                                4. 修正結束
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/rbtree.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}

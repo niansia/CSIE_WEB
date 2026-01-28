@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Rod Cutting Problem{% endblock %}
+
+{% block head %}
+<style>
+    #canvas-wrapper {
+        border: 1px solid #ccc;
+        background-color: white;
+        padding: 10px;
+        overflow: auto;
+        max-height: 600px;
+    }
+    .step-text {
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+    .formula-box {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+    }
+    #prices-table-container {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+<!-- MathJax for formula -->
+<script>
+window.MathJax = {
+  options: {
+    enableMenu: false
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <h2>Rod Cutting Problem (鋼條切割問題)</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">設定與輸入</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">鋼條總長度 (n)</label>
+                    <input type="number" class="form-control" id="lengthInput" value="5" min="1">
+                </div>
+                <hr>
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col">
+                        <label class="form-label">長度 (Length)</label>
+                        <input type="number" class="form-control" id="itemLengthInput" placeholder="L">
+                    </div>
+                    <div class="col">
+                        <label class="form-label">價格 (Price)</label>
+                        <input type="number" class="form-control" id="itemPriceInput" placeholder="P">
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-success" onclick="addPriceItem()">加入</button>
+                    </div>
+                </div>
+                
+                <div id="prices-table-container">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>長度</th>
+                                <th>價格</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pricesTableBody">
+                            <!-- Items will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3 d-grid gap-2">
+                    <button class="btn btn-primary" onclick="runRodCutting()">執行 (Execute)</button>
+                    <button class="btn btn-secondary" onclick="resetDefault()">重置預設值</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">遞迴關係式 (Recursive Formula)</div>
+            <div class="card-body">
+                <div class="formula-box">
+                    $$ r_n = \max_{1 \le i \le n} (p_i + r_{n-i}) $$
+                </div>
+                <div id="dynamicFormula" class="alert alert-secondary text-center" style="font-family: 'Courier New', monospace; font-weight: bold;">
+                    準備就緒...
+                </div>
+                <small class="text-muted">
+                    其中 $r_n$ 為長度 $n$ 的最大收益，$p_i$ 為長度 $i$ 的價格。
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row mb-2">
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" onclick="prevStep()">⟲ 上一步</button>
+                    <button class="btn btn-outline-primary" id="playBtn" onclick="togglePlay()">⏵ 自動播放</button>
+                    <button class="btn btn-outline-secondary" onclick="nextStep()">下一步 ▶</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <span class="input-group-text">速度: <span id="speedDisplay" class="ms-1">1500 ms</span></span>
+                    <input type="range" class="form-range form-control" id="speedRange" min="100" max="3000" value="1500" style="width: 150px;">
+                </div>
+            </div>
+            <div class="col-auto align-self-center">
+                <span id="statusText">準備就緒</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div id="canvas-wrapper">
+                    <canvas id="rodCanvas" height="400"></canvas>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <i class="bi bi-info-circle"></i> <strong>圖示說明：</strong> 表格顯示各長度 j 的最大收益 r[j] 與最佳第一刀位置 s[j]。
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="alert alert-info" id="msgContent" role="alert" style="white-space: pre-wrap; min-height: 100px;">
+                    請設定參數並點擊執行。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/rod_cutting.js') }}"></script>
+{% endblock %}

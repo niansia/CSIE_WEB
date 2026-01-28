@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">23.1-10 MST Weight Reduction Proof</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body text-center">
+                    <canvas id="algoCanvas" width="800" height="400" style="border: 1px solid #ddd;"></canvas>
+                </div>
+            </div>
+            <div class="mt-3 text-center">
+                <button id="startBtn" class="btn btn-primary">開始演示</button>
+                <button id="prevBtn" class="btn btn-secondary" disabled>上一步</button>
+                <button id="nextBtn" class="btn btn-secondary" disabled>下一步</button>
+                <button id="resetBtn" class="btn btn-danger">重置</button>
+            </div>
+            <div class="mt-3">
+                <label for="speedRange" class="form-label">播放速度: <span id="speedVal">1x</span></label>
+                <input type="range" class="form-range" id="speedRange" min="1" max="5" value="1">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    說明
+                </div>
+                <div class="card-body">
+                    <div id="step-explanation" style="min-height: 100px;">
+                        點擊「開始演示」以查看證明過程。
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-3">
+                <div class="card-header">
+                    題目描述
+                </div>
+                <div class="card-body">
+                    <p><strong>23.1-10</strong></p>
+                    <p>Given a graph $G$ and a minimum spanning tree $T$, suppose that we decrease the weight of one of the edges in $T$. Show that $T$ is still a minimum spanning tree for $G$.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/mst_reduce_weight.js') }}"></script>
+<!-- MathJax for rendering math formulas -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}
